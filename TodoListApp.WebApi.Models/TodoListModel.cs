@@ -1,4 +1,3 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace TodoListApp.WebApi.Models
@@ -11,8 +10,6 @@ namespace TodoListApp.WebApi.Models
         [StringLength(100)]
         public string Title { get; set; }
         public string Description { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
 
         [Required]
         public int OwnerId { get; set; }

@@ -1,3 +1,5 @@
+using TodoListApp.WebApp.Services;
+
 namespace TodoListApp.WebApp;
 
 public class Program
@@ -9,6 +11,12 @@ public class Program
         // Add services to the container.
         builder.Services.AddControllersWithViews();
 
+        // Register TodoListWebApiService for dependency injection
+        builder.Services.AddHttpClient<ITodoListWebApiService, TodoListWebApiService>(client =>
+        {
+            client.BaseAddress = new Uri("https://localhost:7065/"); // Update with your WebApi URL
+        });
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -17,6 +25,10 @@ public class Program
             app.UseExceptionHandler("/Home/Error");
             // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
             app.UseHsts();
+        }
+        else
+        {
+            app.UseDeveloperExceptionPage();
         }
 
         app.UseHttpsRedirection();

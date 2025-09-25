@@ -23,10 +23,11 @@ public class TodoListDatabaseService : ITodoListDatabaseService
         {
             var entity = new TodoListEntity
             {
+                Id = todoList.Id,
                 Title = todoList.Title,
                 Description = todoList.Description,
-                CreatedAt = DateTime.UtcNow,
                 OwnerId = ownerId,
+                Tasks = MapTaskModelsToEntities(todoList.Tasks),
             };
 
             await this._dbContext.TodoLists.AddAsync(entity);
@@ -70,8 +71,8 @@ public class TodoListDatabaseService : ITodoListDatabaseService
         {
             var skip = (page - 1) * pageSize;
             var todoLists = await this._dbContext.TodoLists
+                .Include(t => t.Tasks)
                 .Where(t => t.OwnerId == ownerId)
-                .OrderByDescending(t => t.CreatedAt)
                 .Skip(skip)
                 .Take(pageSize)
                 .ToListAsync();
@@ -89,7 +90,7 @@ public class TodoListDatabaseService : ITodoListDatabaseService
     {
         try
         {
-            var entity = await this._dbContext.TodoLists.FindAsync(id);
+            var entity = await this._dbContext.TodoLists.Include(t => t.Tasks).FirstOrDefaultAsync(t => t.Id == id);
             return entity != null ? MapEntityToModel(entity) : null;
         }
         catch (Exception ex)
@@ -126,7 +127,6 @@ public class TodoListDatabaseService : ITodoListDatabaseService
 
             entity.Title = todoList.Title;
             entity.Description = todoList.Description;
-            entity.UpdatedAt = DateTime.Now;
 
             this._dbContext.TodoLists.Update(entity);
             await this._dbContext.SaveChangesAsync();
@@ -147,8 +147,89 @@ public class TodoListDatabaseService : ITodoListDatabaseService
             Id = entity.Id,
             Title = entity.Title,
             Description = entity.Description,
-            CreatedAt = entity.CreatedAt,
-            UpdatedAt = entity.UpdatedAt
+            OwnerId = entity.OwnerId,
+            Tasks = MapTaskEntitiesToModels(entity.Tasks)
         };
+    }
+    private static Models.Task MapTaskEntityToModel(TaskEntity entity)
+    {
+        if (entity == null)
+        {
+            return null;
+        }
+
+        // Parse JSON strings to lists
+        List<string> tags = new List<string>();
+        List<string> comments = new List<string>();
+
+        if (!string.IsNullOrEmpty(entity.TagsJson))
+        {
+            tags = System.Text.Json.JsonSerializer.Deserialize<List<string>>(entity.TagsJson);
+        }
+
+        if (!string.IsNullOrEmpty(entity.CommentsJson))
+        {
+            comments = System.Text.Json.JsonSerializer.Deserialize<List<string>>(entity.CommentsJson);
+        }
+
+        return new Models.Task
+        {
+            Id = entity.Id,
+            Title = entity.Title,
+            Description = entity.Description,
+            TodoListId = entity.TodoListId,
+            Status = entity.Status,
+            DueDate = entity.DueDate,
+            CreatedAt = entity.CreatedAt,
+            AssignedUserId = entity.AssignedUserId,
+            Tags = tags ?? new List<string>(),
+            Comments = comments ?? new List<string>()
+        };
+    }
+
+    private static TaskEntity MapTaskModelToEntity(Models.Task task)
+    {
+        if (task == null)
+        {
+            return null;
+        }
+
+        // Serialize lists to JSON
+        string tagsJson = null;
+        string commentsJson = null;
+
+        if (task.Tags?.Any() == true)
+        {
+            tagsJson = System.Text.Json.JsonSerializer.Serialize(task.Tags);
+        }
+
+        if (task.Comments?.Any() == true)
+        {
+            commentsJson = System.Text.Json.JsonSerializer.Serialize(task.Comments);
+        }
+
+        return new TaskEntity
+        {
+            Id = task.Id,
+            Title = task.Title,
+            Description = task.Description,
+            TodoListId = task.TodoListId,
+            Status = task.Status,
+            DueDate = task.DueDate,
+            CreatedAt = task.CreatedAt,
+            AssignedUserId = task.AssignedUserId,
+            TagsJson = tagsJson,
+            CommentsJson = commentsJson
+        };
+    }
+
+    private static ICollection<Models.Task> MapTaskEntitiesToModels(ICollection<TaskEntity> entities)
+    {
+        return entities?.Select(MapTaskEntityToModel).ToList() ?? new List<Models.Task>();
+    }
+
+    private static ICollection<TaskEntity> MapTaskModelsToEntities(ICollection<Models.Task> tasks)
+    {
+        return tasks?.Select(MapTaskModelToEntity).ToList() ?? new List<TaskEntity>();
     }
 }
