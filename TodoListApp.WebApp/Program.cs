@@ -17,6 +17,12 @@ public class Program
             client.BaseAddress = new Uri("https://localhost:7065/"); // Update with your WebApi URL
         });
 
+        builder.Services.AddScoped<ITaskWebApiService, TaskWebApiService>();
+        builder.Services.AddHttpClient<ITaskWebApiService, TaskWebApiService>(client =>
+        {
+            client.BaseAddress = new Uri("https://localhost:7065/"); // Update with your WebApi URL
+        });
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.

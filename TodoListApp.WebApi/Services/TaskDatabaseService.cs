@@ -428,5 +428,69 @@ namespace TodoListApp.WebApi.Services
                 throw;
             }
         }
+
+        public async Task<IEnumerable<Models.Task>> GetTasksAssignedToUser(int userId, int page = 1, int pageSize = 10,
+            TaskSortOption sortOption = TaskSortOption.Default, bool descending = false)
+        {
+            try
+            {
+                var skip = (page - 1) * pageSize;
+                var query = this._dbContext.Tasks
+                    .Where(t => t.AssignedUserId == userId);
+
+                switch (sortOption)
+                {
+                    case TaskSortOption.ByTitle:
+                        query = descending
+                            ? query.OrderByDescending(t => t.Title)
+                            : query.OrderBy(t => t.Title);
+                        break;
+
+                    case TaskSortOption.ByDueDate:
+                        if (descending)
+                        {
+                            query = query.OrderByDescending(t => t.DueDate == null)
+                                        .ThenByDescending(t => t.DueDate);
+                        }
+                        else
+                        {
+                            query = query.OrderBy(t => t.DueDate == null)
+                                        .ThenBy(t => t.DueDate);
+                        }
+                        break;
+                    case TaskSortOption.Default:
+                        break;
+                    default:
+                        query = query.OrderByDescending(t => t.CreatedAt);
+                        break;
+                }
+
+                var tasks = await query.Skip(skip)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return tasks.Select(entity => MapEntityToModel(entity));
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, $"Error retrieving tasks for user id {userId}");
+                throw;
+            }
+        }
+
+        public async Task<int> GetAssignedTasksCount(int userId)
+        {
+            try
+            {
+                var tasks = await this._dbContext.Tasks
+                    .Where(t => t.AssignedUserId == userId).ToListAsync();
+                return tasks.Count;
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, $"Error retrieving tasks count for user id {userId}");
+                throw;
+            }
+        }
     }
 }

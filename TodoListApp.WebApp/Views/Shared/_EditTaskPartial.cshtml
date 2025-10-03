@@ -1,0 +1,66 @@
+@model TodoListApp.WebApp.Models.TodoTaskModel
+
+<div class="modal fade" id="editTaskModal-@Model.Id" tabindex="-1" aria-labelledby="editTaskModalLabel-@Model.Id" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTaskModalLabel-@Model.Id">Edit Task: @Model.Title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Task" asp-action="Update" method="post">
+                <input type="hidden" name="Id" value="@Model.Id" />
+                <input type="hidden" name="TodoListId" value="@Model.TodoListId" />
+                <input type="hidden" name="CreatedAt" value="@Model.CreatedAt" />
+                
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="Title-@Model.Id" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="Title-@Model.Id" name="Title" value="@Model.Title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="Description-@Model.Id" class="form-label">Description</label>
+                        <textarea class="form-control" id="Description-@Model.Id" name="Description" rows="3">@Model.Description</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="Status-@Model.Id" class="form-label">Status</label>
+                        <select class="form-select" id="Status-@Model.Id" name="Status">
+                            <option value="0" >Not Started</option>
+                            <option value="1" >In Progress</option>
+                            <option value="2" >Completed</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="DueDate-@Model.Id" class="form-label">Due Date</label>
+                        <input type="datetime-local" class="form-control" id="DueDate-@Model.Id" name="DueDate" 
+                            value="@(Model.DueDate.HasValue ? Model.DueDate.Value.ToString("yyyy-MM-ddTHH:mm") : "")" />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="AssignedUserId-@Model.Id" class="form-label">Assigned User ID</label>
+                        <input type="number" class="form-control" id="AssignedUserId-@Model.Id" name="AssignedUserId" value="@Model.AssignedUserId" />
+                    </div>
+                    
+                    <!-- Tags input -->
+                    <div class="mb-3">
+                        <label for="tagsInput-@Model.Id" class="form-label">Tags (comma separated)</label>
+                        <input id="tagsInput-@Model.Id" name="TagsInput" class="form-control" 
+                            value="@(Model.Tags != null ? string.Join(",", Model.Tags) : "")" />
+                    </div>
+                    
+                    <!-- Add a new comment -->
+                    <div class="mb-3">
+                        <label for="newComment-@Model.Id" class="form-label">Add Comment</label>
+                        <textarea id="newComment-@Model.Id" name="NewComment" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

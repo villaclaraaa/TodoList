@@ -21,7 +21,7 @@ public class TaskEntity
     public DateTime? DueDate { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public int AssignedUserId { get; set; }
-    public string TagsJson { get; set; }
-    public string CommentsJson { get; set; }
+    public string? TagsJson { get; set; }
+    public string? CommentsJson { get; set; }
 
 }

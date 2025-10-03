@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using TodoListApp.Services.Database.Entities;
 
@@ -34,6 +29,14 @@ namespace TodoListApp.Services.Database.Contexts
                 .WithMany(tl => tl.Tasks)  // Specify the Tasks collection in TodoListEntity
                 .HasForeignKey(t => t.TodoListId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskEntity>()
+                .Property(t => t.TagsJson)
+                .IsRequired(false);
+
+            modelBuilder.Entity<TaskEntity>()
+                .Property(t => t.CommentsJson)
+                .IsRequired(false);
         }
     }
 }
