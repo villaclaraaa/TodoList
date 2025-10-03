@@ -15,7 +15,7 @@ public class TodoListDatabaseService : ITodoListDatabaseService
         this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<TodoList> AddTodoListAsync(int ownerId, TodoList todoList)
+    public async Task<TodoList> AddTodoListAsync(Guid ownerId, TodoList todoList)
     {
         ArgumentNullException.ThrowIfNull(todoList);
 
@@ -65,7 +65,7 @@ public class TodoListDatabaseService : ITodoListDatabaseService
         }
     }
 
-    public async Task<IEnumerable<TodoList>> GetAllTodoListsAsync(int ownerId, int page = 1, int pageSize = 10)
+    public async Task<IEnumerable<TodoList>> GetAllTodoListsAsync(Guid ownerId, int page = 1, int pageSize = 10)
     {
         try
         {
@@ -100,7 +100,7 @@ public class TodoListDatabaseService : ITodoListDatabaseService
         }
     }
 
-    public async Task<int> GetTodoListsCountAsync(int ownerId)
+    public async Task<int> GetTodoListsCountAsync(Guid ownerId)
     {
         try
         {

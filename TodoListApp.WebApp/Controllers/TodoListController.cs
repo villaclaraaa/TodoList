@@ -1,32 +1,42 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using TodoListApp.WebApp.Helpers;
 using TodoListApp.WebApp.Models;
 using TodoListApp.WebApp.Services;
+
 namespace TodoListApp.WebApp.Controllers;
 
 public class TodoListController : Controller
 {
     private readonly ITodoListWebApiService _todoListService;
     private readonly ILogger<TodoListController> _logger;
-    private readonly int DefaultOwnerId = 1;
-    public TodoListController(ITodoListWebApiService service, ILogger<TodoListController> logger)
+    private readonly IUserService _userService;
+    public TodoListController(
+        ITodoListWebApiService service,
+        IUserService userService,
+        ILogger<TodoListController> logger)
     {
         this._todoListService = service ?? throw new ArgumentNullException(nameof(service));
+        this._userService = userService ?? throw new ArgumentNullException(nameof(userService));
         this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(int page = 1, int pageSize = 10)
+    public async Task<IActionResult> Index(Guid ownerId, int page = 1, int pageSize = 4)
     {
         try
         {
-            var todoLitst = await this._todoListService.GetAllTodoListsAsync(1, page, pageSize);
-            var totalCount = await this._todoListService.GetTodoListsCountAsync(1);
+            var todoLitst = await this._todoListService.GetAllTodoListsAsync(ownerId, page, pageSize);
+            var totalCount = await this._todoListService.GetTodoListsCountAsync(ownerId);
+
+            var viewModels = todoLitst.Select(Mapper.MapDomainToViewModel).ToList();
 
             this.ViewBag.TotalCount = totalCount;
             this.ViewBag.PageSize = pageSize;
             this.ViewBag.CurrentPage = page;
+            this.ViewBag.OwnerId = ownerId;
 
-            return this.View(todoLitst);
+            return this.View(viewModels);
         }
         catch (Exception ex)
         {
@@ -37,14 +47,14 @@ public class TodoListController : Controller
     }
 
     [HttpGet]
-    public IActionResult Create()
+    public IActionResult Create(Guid ownerId)
     {
-        return this.View(new TodoListWebApiModel { OwnerId = this.DefaultOwnerId });
+        return this.View(new TodoListModel { OwnerId = ownerId });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(TodoListWebApiModel todoList)
+    public async Task<IActionResult> Create(TodoListModel todoListModel)
     {
         if (!this.ModelState.IsValid)
         {
@@ -55,20 +65,20 @@ public class TodoListController : Controller
                     this._logger.LogWarning($"Validation error: {error.ErrorMessage}");
                 }
             }
-            return this.View(todoList);
+            return this.View(todoListModel);
         }
 
         try
         {
-            todoList.OwnerId = this.DefaultOwnerId;
-            var createdTodoList = await this._todoListService.AddTodoListAsync(todoList);
-            return this.RedirectToAction(nameof(Index));
+            var domainModel = Mapper.MapViewModelToDomain(todoListModel);
+            var createdTodoList = await this._todoListService.AddTodoListAsync(domainModel);
+            return this.RedirectToAction(nameof(Index), new { ownerId = todoListModel.OwnerId });
         }
         catch (Exception ex)
         {
             this._logger.LogError(ex, "Error creating todo list");
             this.ModelState.AddModelError("", "An error occurred while creating the todo list. Please try again.");
-            return this.View(todoList);
+            return this.View(todoListModel);
             throw;
         }
     }
@@ -84,7 +94,9 @@ public class TodoListController : Controller
                 return this.NotFound();
             }
 
-            return this.View(todoList);
+            var viewModel = Mapper.MapDomainToViewModel(todoList);
+
+            return this.View(viewModel);
         }
         catch (Exception ex)
         {
@@ -101,13 +113,14 @@ public class TodoListController : Controller
     {
         try
         {
+            var todoList = await this._todoListService.GetTodoListByIdAsync(id);
             var success = await this._todoListService.DeleteTodoListAsync(id);
             if (!success)
             {
                 return this.NotFound();
             }
 
-            return this.RedirectToAction(nameof(Index));
+            return this.RedirectToAction(nameof(Index), new { ownerId = todoList.OwnerId });
         }
         catch (Exception ex)
         {
@@ -129,7 +142,9 @@ public class TodoListController : Controller
                 return this.NotFound();
             }
 
-            return this.View(todoList);
+            var viewModel = Mapper.MapDomainToViewModel(todoList);
+
+            return this.View(viewModel);
         }
         catch (Exception ex)
         {
@@ -142,28 +157,29 @@ public class TodoListController : Controller
     // US04: Process form submission to update a todo list
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, TodoListWebApiModel todoList)
+    public async Task<IActionResult> Edit(int id, TodoListModel todoListModel)
     {
-        if (id != todoList.Id)
+        if (id != todoListModel.Id)
         {
             return this.BadRequest();
         }
 
         if (!this.ModelState.IsValid)
         {
-            return this.View(todoList);
+            return this.View(todoListModel);
         }
 
         try
         {
-            var updatedTodoList = await this._todoListService.UpdateTodoListAsync(id, todoList);
-            return this.RedirectToAction(nameof(Index));
+            var domainModel = Mapper.MapViewModelToDomain(todoListModel);
+            var updatedTodoList = await this._todoListService.UpdateTodoListAsync(id, domainModel);
+            return this.RedirectToAction(nameof(Index), new { ownerId = todoListModel.OwnerId });
         }
         catch (Exception ex)
         {
             this._logger.LogError(ex, $"Error updating todo list with ID {id}");
             this.ModelState.AddModelError("", "An error occurred while updating the todo list. Please try again.");
-            return this.View(todoList);
+            return this.View(todoListModel);
             throw;
         }
     }
@@ -180,7 +196,32 @@ public class TodoListController : Controller
                 return this.NotFound();
             }
 
-            return this.View(todoList);
+            var viewModel = Mapper.MapDomainToViewModel(todoList);
+            var userNames = new Dictionary<Guid, string>();
+            var userEmails = new Dictionary<Guid, string>();
+
+            foreach (var task in viewModel.Tasks)
+            {
+                if (task.AssignedUserId != Guid.Empty && !userNames.ContainsKey(task.AssignedUserId))
+                {
+                    var user = await this._userService.GetUserByIdAsync(task.AssignedUserId);
+                    if (user != null)
+                    {
+                        userNames[task.AssignedUserId] = $"{user.FirstName} {user.LastName}";
+                        userEmails[task.AssignedUserId] = user.Email;
+                    }
+                    else
+                    {
+                        userNames[task.AssignedUserId] = "Unknown User";
+                    }
+                }
+            }
+
+            this.ViewBag.UserNames = userNames;
+            this.ViewBag.UserEmails = userEmails;
+            this.ViewBag.CurrentUserId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            return this.View(viewModel);
         }
         catch (Exception ex)
         {

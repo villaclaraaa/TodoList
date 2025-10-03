@@ -1,4 +1,5 @@
-@model TodoListApp.WebApp.Models.TodoListWebApiModel
+@model TodoListApp.WebApp.Models.TodoListModel
+@using System.Security.Claims
 
 @{
     ViewData["Title"] = "Create Todo List";
@@ -24,12 +25,12 @@
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
             
-            <input type="hidden" asp-for="OwnerId" />
+            <input type="hidden" asp-for="OwnerId" value="@User.FindFirstValue(ClaimTypes.NameIdentifier)" />
             
             <div class="form-group">
-                <button type="submit" class="btn btn-primary">Create</button>
-                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
-            </div>
+				<button type="submit" class="btn btn-primary">Create</button>
+				<a asp-action="Index" asp-route-ownerId="@User.FindFirstValue(ClaimTypes.NameIdentifier)" class="btn btn-secondary">Back to List</a>
+			</div>
         </form>
     </div>
 </div>

@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoListApp.WebApi.Models;
 using TodoListApp.WebApi.Services;
 
 namespace TodoListApp.WebApi.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class TaskController : Controller
@@ -465,5 +467,74 @@ namespace TodoListApp.WebApi.Controllers
                 throw;
             }
         }
+
+        [HttpGet("assigned/{userId}")]
+        public async Task<ActionResult<IEnumerable<TaskModel>>> GetTasksAssignedToUser(Guid userId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] TaskSortOption sortOption = TaskSortOption.Default,
+            [FromQuery] bool descending = false,
+            [FromQuery] Models.TaskStatus? statusFilter = null,
+            [FromQuery] string? tagFilter = null)
+        {
+            try
+            {
+                var tasksList = await this._taskService.GetTasksAssignedToUser(userId, page, pageSize, sortOption, descending, statusFilter, tagFilter);
+                if (tasksList == null)
+                {
+                    return this.NotFound($"Tasks for user with {userId} not found");
+                }
+
+                var taskModels = new List<TaskModel>();
+                foreach (var task in tasksList)
+                {
+                    taskModels.Add(new TaskModel
+                    {
+                        Id = task.Id,
+                        Title = task.Title,
+                        Description = task.Description,
+                        TodoListId = task.TodoListId,
+                        Status = task.Status,
+                        DueDate = task.DueDate,
+                        CreatedAt = task.CreatedAt,
+                        AssignedUserId = task.AssignedUserId,
+                        Tags = task.Tags,
+                        Comments = task.Comments
+                    });
+                }
+
+                this.Response.Headers.Add("X-Total-Count", tasksList.Count().ToString());
+                this.Response.Headers.Add("X-Page-Size", pageSize.ToString());
+                this.Response.Headers.Add("X-Current-Page", page.ToString());
+
+                return this.Ok(taskModels);
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, $"Error retrieving tasks for user with ID {userId}");
+                return this.StatusCode(StatusCodes.Status500InternalServerError, $"Error retrieving tasks for user with ID {userId}");
+                throw;
+            }
+        }
+
+        [HttpGet("assigned/{userId}/count")]
+        public async Task<ActionResult<int>> GetAssignedTasksCount(Guid userId,
+            [FromQuery] Models.TaskStatus? statusFilter = null,
+            [FromQuery] string? tagFilter = null)
+        {
+            try
+            {
+                var count = await this._taskService.GetAssignedTasksCount(userId, statusFilter, tagFilter);
+
+                return this.Ok(count);
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, $"Error retrieving tasks count for user with ID {userId}");
+                return this.StatusCode(StatusCodes.Status500InternalServerError, $"Error retrieving tasks count for user with ID {userId}");
+                throw;
+            }
+        }
+
     }
 }

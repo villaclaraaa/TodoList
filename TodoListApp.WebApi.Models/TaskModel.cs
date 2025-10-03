@@ -23,7 +23,7 @@ public class TaskModel
             && this.DueDate.Value < DateTime.UtcNow
             && this.Status != TaskStatus.Completed;
 
-    public int AssignedUserId { get; set; }
+    public Guid AssignedUserId { get; set; }
     public List<string> Tags { get; set; } = new List<string>();
     public List<string> Comments { get; set; } = new List<string>();
 }

@@ -1,4 +1,5 @@
-@model TodoListApp.WebApp.Models.TodoListWebApiModel
+@model TodoListApp.WebApp.Models.TodoListModel
+@using System.Security.Claims
 
 @{
     ViewData["Title"] = "Edit Todo List";
@@ -28,7 +29,7 @@
             
             <div class="form-group">
                 <button type="submit" class="btn btn-primary">Save</button>
-                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                <a asp-action="Index" asp-route-ownerId="@User.FindFirstValue(ClaimTypes.NameIdentifier)" class="btn btn-secondary">Back to List</a>
             </div>
         </form>
     </div>

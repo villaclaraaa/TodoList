@@ -30,11 +30,10 @@ namespace TodoListApp.Services.Database.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("AssignedUserId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("AssignedUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("CommentsJson")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -51,7 +50,6 @@ namespace TodoListApp.Services.Database.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("TagsJson")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
@@ -81,8 +79,8 @@ namespace TodoListApp.Services.Database.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("OwnerId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Title")
                         .IsRequired()

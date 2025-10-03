@@ -12,6 +12,6 @@ public class TodoListEntity
     public string Description { get; set; }
 
     [Required]
-    public int OwnerId { get; set; }
+    public Guid OwnerId { get; set; }
     public ICollection<TaskEntity> Tasks { get; set; } = new List<TaskEntity>();
 }

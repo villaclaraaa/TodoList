@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using TodoListApp.WebApp.Helpers;
 using TodoListApp.WebApp.Models;
 
 namespace TodoListApp.WebApp.Services;
@@ -17,7 +18,7 @@ public class TodoListWebApiService : ITodoListWebApiService
     }
 
     // US01: Get all todo lists
-    public async Task<IEnumerable<TodoListWebApiModel>> GetAllTodoListsAsync(int ownerId, int page = 1, int pageSize = 10)
+    public async Task<IEnumerable<TodoList>> GetAllTodoListsAsync(Guid ownerId, int page = 1, int pageSize = 10)
     {
         try
         {
@@ -25,7 +26,7 @@ public class TodoListWebApiService : ITodoListWebApiService
             response.EnsureSuccessStatusCode();
 
             var todoLists = await response.Content.ReadFromJsonAsync<IEnumerable<TodoListWebApiModel>>();
-            return todoLists ?? new List<TodoListWebApiModel>();
+            return todoLists?.Select(Mapper.MapApiModelToDomain) ?? new List<TodoList>();
         }
         catch (Exception ex)
         {
@@ -35,7 +36,7 @@ public class TodoListWebApiService : ITodoListWebApiService
     }
 
     // US01: Get total count for pagination
-    public async Task<int> GetTodoListsCountAsync(int ownerId)
+    public async Task<int> GetTodoListsCountAsync(Guid ownerId)
     {
         try
         {
@@ -60,12 +61,13 @@ public class TodoListWebApiService : ITodoListWebApiService
     }
 
     // US02: Add a new todo list
-    public async Task<TodoListWebApiModel> AddTodoListAsync(TodoListWebApiModel todoList)
+    public async Task<TodoList> AddTodoListAsync(TodoList todoList)
     {
         try
         {
+            var apiModel = Mapper.MapDomainToApiModel(todoList);
             var content = new StringContent(
-                JsonSerializer.Serialize(todoList),
+                JsonSerializer.Serialize(apiModel),
                 Encoding.UTF8,
                 "application/json");
 
@@ -73,7 +75,7 @@ public class TodoListWebApiService : ITodoListWebApiService
             response.EnsureSuccessStatusCode();
 
             var createdTodoList = await response.Content.ReadFromJsonAsync<TodoListWebApiModel>();
-            return createdTodoList;
+            return Mapper.MapApiModelToDomain(createdTodoList);
         }
         catch (Exception ex)
         {
@@ -98,7 +100,7 @@ public class TodoListWebApiService : ITodoListWebApiService
     }
 
     // US04: Get a specific todo list by ID
-    public async Task<TodoListWebApiModel> GetTodoListByIdAsync(int id)
+    public async Task<TodoList> GetTodoListByIdAsync(int id)
     {
         try
         {
@@ -106,7 +108,7 @@ public class TodoListWebApiService : ITodoListWebApiService
             response.EnsureSuccessStatusCode();
 
             var todoList = await response.Content.ReadFromJsonAsync<TodoListWebApiModel>();
-            return todoList;
+            return Mapper.MapApiModelToDomain(todoList);
         }
         catch (Exception ex)
         {
@@ -116,12 +118,13 @@ public class TodoListWebApiService : ITodoListWebApiService
     }
 
     // US04: Update an existing todo list
-    public async Task<TodoListWebApiModel> UpdateTodoListAsync(int id, TodoListWebApiModel todoList)
+    public async Task<TodoList> UpdateTodoListAsync(int id, TodoList todoList)
     {
         try
         {
+            var apiModel = Mapper.MapDomainToApiModel(todoList);
             var content = new StringContent(
-                JsonSerializer.Serialize(todoList),
+                JsonSerializer.Serialize(apiModel),
                 Encoding.UTF8,
                 "application/json");
 
@@ -129,7 +132,7 @@ public class TodoListWebApiService : ITodoListWebApiService
             response.EnsureSuccessStatusCode();
 
             var updatedTodoList = await response.Content.ReadFromJsonAsync<TodoListWebApiModel>();
-            return updatedTodoList;
+            return Mapper.MapApiModelToDomain(updatedTodoList);
         }
         catch (Exception ex)
         {

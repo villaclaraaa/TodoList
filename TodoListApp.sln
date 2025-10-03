@@ -16,6 +16,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TodoListApp.WebApi.Models", "TodoListApp.WebApi.Models\TodoListApp.WebApi.Models.csproj", "{B8B631CA-022C-4059-888F-D58BD76EB3B3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TodoListApp.WebApp", "TodoListApp.WebApp\TodoListApp.WebApp.csproj", "{92447B8D-1882-498F-8634-142E955F8EA9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0BDCA7F8-0B6D-4351-94B2-BC760664C11D} = {0BDCA7F8-0B6D-4351-94B2-BC760664C11D}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TodoListApp.WebApi", "TodoListApp.WebApi\TodoListApp.WebApi.csproj", "{1D45EA8A-BA9A-4A15-A28C-12BD9CBF4978}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -26,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TodoListApp.Services.Databa
 	ProjectSection(ProjectDependencies) = postProject
 		{B8B631CA-022C-4059-888F-D58BD76EB3B3} = {B8B631CA-022C-4059-888F-D58BD76EB3B3}
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TodoListApp.Identity", "TodoListApp.Identity\TodoListApp.Identity.csproj", "{0BDCA7F8-0B6D-4351-94B2-BC760664C11D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +54,10 @@ Global
 		{0AF1DE4F-2D43-4CAF-9F6E-ACE1773861EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0AF1DE4F-2D43-4CAF-9F6E-ACE1773861EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0AF1DE4F-2D43-4CAF-9F6E-ACE1773861EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BDCA7F8-0B6D-4351-94B2-BC760664C11D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BDCA7F8-0B6D-4351-94B2-BC760664C11D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BDCA7F8-0B6D-4351-94B2-BC760664C11D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BDCA7F8-0B6D-4351-94B2-BC760664C11D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -166,6 +166,10 @@ namespace TodoListApp.WebApi.Services
                 {
                     entity.CommentsJson = JsonSerializer.Serialize(task.Comments);
                 }
+                if (task.Comments?.Count == 0)
+                {
+                    entity.CommentsJson = null;
+                }
 
                 this._dbContext.Tasks.Update(entity);
                 await this._dbContext.SaveChangesAsync();
@@ -425,6 +429,91 @@ namespace TodoListApp.WebApi.Services
             catch (Exception ex)
             {
                 this._logger.LogError(ex, $"Error changing status for task with ID {taskId}");
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<Models.Task>> GetTasksAssignedToUser(Guid userId, int page = 1, int pageSize = 10,
+            TaskSortOption sortOption = TaskSortOption.Default, bool descending = false
+            , Models.TaskStatus? statusFilter = null, string? tagFilter = null)
+        {
+            try
+            {
+                var skip = (page - 1) * pageSize;
+                var query = this._dbContext.Tasks
+                    .Where(t => t.AssignedUserId == userId);
+
+                if (statusFilter.HasValue)
+                {
+                    query = query.Where(t => t.Status == statusFilter.Value);
+                }
+
+                if (!string.IsNullOrEmpty(tagFilter))
+                {
+                    query = query.Where(t => t.TagsJson.Contains(tagFilter));
+                }
+
+                switch (sortOption)
+                {
+                    case TaskSortOption.ByTitle:
+                        query = descending
+                            ? query.OrderByDescending(t => t.Title)
+                            : query.OrderBy(t => t.Title);
+                        break;
+
+                    case TaskSortOption.ByDueDate:
+                        if (descending)
+                        {
+                            query = query.OrderByDescending(t => t.DueDate == null)
+                                        .ThenByDescending(t => t.DueDate);
+                        }
+                        else
+                        {
+                            query = query.OrderBy(t => t.DueDate == null)
+                                        .ThenBy(t => t.DueDate);
+                        }
+                        break;
+                    case TaskSortOption.Default:
+                        break;
+                    default:
+                        query = query.OrderByDescending(t => t.CreatedAt);
+                        break;
+                }
+
+                var tasks = await query.Skip(skip)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return tasks.Select(entity => MapEntityToModel(entity));
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, $"Error retrieving tasks for user id {userId}");
+                throw;
+            }
+        }
+
+        public async Task<int> GetAssignedTasksCount(Guid userId, Models.TaskStatus? statusFilter = null, string? tagFilter = null)
+        {
+            try
+            {
+                var tasks = await this._dbContext.Tasks
+                    .Where(t => t.AssignedUserId == userId).ToListAsync();
+
+                if (statusFilter.HasValue)
+                {
+                    tasks = tasks.Where(t => t.Status == statusFilter.Value).ToList();
+                }
+                if (!string.IsNullOrEmpty(tagFilter))
+                {
+                    tasks = tasks.Where(t => t.TagsJson.Contains(tagFilter)).ToList();
+                }
+
+                return tasks.Count;
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, $"Error retrieving tasks count for user id {userId}");
                 throw;
             }
         }

@@ -13,6 +13,6 @@ public class TodoListWebApiModel
     public string Description { get; set; }
 
     [Required]
-    public int OwnerId { get; set; }
-    public List<TodoTask> Tasks { get; set; } = new List<TodoTask>();
+    public Guid OwnerId { get; set; }
+    public List<TodoTaskWebApiModel> Tasks { get; set; } = new List<TodoTaskWebApiModel>();
 }

@@ -1,18 +1,40 @@
 html {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
+}
+
+.user-dropdown {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+    z-index: 1050;
+}
+
+    .user-dropdown .dropdown-item {
+        padding: 0.5rem 1rem;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+        .user-dropdown .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+
+.position-relative {
+    position: relative;
 }

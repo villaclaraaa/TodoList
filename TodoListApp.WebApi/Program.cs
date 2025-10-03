@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using TodoListApp.Services.Database.Contexts;
 using TodoListApp.WebApi.Services;
+using TodoListApp.WebApi.Services.Authentication;
 
 namespace TodoListApp.WebApi;
 
@@ -12,9 +14,13 @@ public class Program
 
         // Add services to the container.
 
-        builder.Services.AddControllers();
+        _ = builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
+
+        builder.Services.AddAuthentication("Bearer")
+            .AddScheme<AuthenticationSchemeOptions, BearerAuthenticationHandler>("Bearer", null);
+        builder.Services.AddAuthorization();
 
         builder.Services.AddDbContext<TodoListDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("TodoListDb")));
@@ -37,8 +43,8 @@ public class Program
 
         app.UseHttpsRedirection();
 
+        app.UseAuthentication();
         app.UseAuthorization();
-
 
         app.MapControllers();
 

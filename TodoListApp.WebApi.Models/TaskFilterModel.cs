@@ -4,7 +4,7 @@ namespace TodoListApp.WebApi.Models
     {
         public int? TodoListId { get; set; }
         public TaskStatus? Status { get; set; }
-        public int? AssignedUserId { get; set; }
+        public Guid? AssignedUserId { get; set; }
         public string TagFilter { get; set; }
 
         // Due date range

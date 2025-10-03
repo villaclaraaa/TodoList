@@ -12,7 +12,7 @@ namespace TodoListApp.WebApi.Models
         public string Description { get; set; }
 
         [Required]
-        public int OwnerId { get; set; }
+        public Guid OwnerId { get; set; }
         public ICollection<TaskModel> Tasks { get; set; } = new List<TaskModel>();
     }
 }

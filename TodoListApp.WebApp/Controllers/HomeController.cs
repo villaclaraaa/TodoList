@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using TodoListApp.WebApp.Models;
 
@@ -14,7 +15,13 @@ public class HomeController : Controller
 
     public IActionResult Index()
     {
-        return this.View();
+        if (this.User.Identity.IsAuthenticated)
+        {
+            var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return this.RedirectToAction("Index", "TodoList", new { ownerId = userId });
+        }
+
+        return this.RedirectToPage("/Account/Login", new { area = "Identity" });
     }
 
     public IActionResult TodoList()

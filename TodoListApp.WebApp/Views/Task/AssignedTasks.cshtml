@@ -1,0 +1,250 @@
+@model IEnumerable<TodoListApp.WebApp.Models.TodoTaskModel>
+@using TodoListApp.WebApp.Models
+@using TModels = TodoListApp.WebApp.Models
+@{
+	ViewData["Title"] = $"Tasks Assigned to User {ViewBag.UserId}";
+
+	string GetSortUrl(TaskSortOption sortOption, bool? descending = null, TModels.TaskStatus? statusFilter = null,
+	string tagFilter = null)
+	{
+		bool isDescending = descending ?? (sortOption == ViewBag.SortBy ? !ViewBag.Descending : false);
+		var status = statusFilter ?? ViewBag.StatusFilter;
+		var tag = tagFilter ?? ViewBag.TagFilter;
+
+		return Url.Action("AssignedTasks", new {
+			userId = ViewBag.UserId,
+			page = ViewBag.CurrentPage,
+			pageSize = ViewBag.PageSize,
+			sortBy = sortOption,
+			descending = isDescending,
+			statusFilter = status == null ? (TModels.TaskStatus?)null : status,
+			tagFilter = tag
+		});
+	}
+
+	string GetStatusFilterUrl(TModels.TaskStatus? status)
+	{
+		return Url.Action("AssignedTasks", new {
+			userId = ViewBag.UserId,
+			page = 1, // Reset to first page when changing filters
+			pageSize = ViewBag.PageSize,
+			sortBy = ViewBag.SortBy,
+			descending = ViewBag.Descending,
+			statusFilter = status,
+			tagFilter = ViewBag.TagFilter
+		});
+	}
+
+	string GetTagFilterUrl(string tag)
+	{
+		return Url.Action("AssignedTasks", new
+		{
+			userId = ViewBag.UserId,
+            page = 1, // Reset to first page when changing filters
+            pageSize = ViewBag.PageSize,
+            sortBy = ViewBag.SortBy,
+            descending = ViewBag.Descending,
+            statusFilter = ViewBag.StatusFilter,
+            tagFilter = tag
+		});
+	}
+
+	string GetStatusUpdateUrl(TodoTaskModel task, TModels.TaskStatus newStatus)
+    {
+        var taskCopy = new TodoTaskModel
+        {
+            Id = task.Id,
+            Title = task.Title,
+            Description = task.Description,
+            TodoListId = task.TodoListId,
+            Status = newStatus,
+            DueDate = task.DueDate,
+            CreatedAt = task.CreatedAt,
+            AssignedUserId = task.AssignedUserId,
+            Tags = task.Tags,
+            Comments = task.Comments
+        };
+        
+        var returnUrl = Url.Action("AssignedTasks", new { 
+            userId = ViewBag.UserId,
+            page = ViewBag.CurrentPage,
+            pageSize = ViewBag.PageSize,
+            sortBy = ViewBag.SortBy,
+            descending = ViewBag.Descending,
+            statusFilter = ViewBag.StatusFilter,
+			tagFilter = ViewBag.TagFilter
+        });
+        
+        return Url.Action("Update", "Task", new { 
+            taskModel = taskCopy, 
+            returnUrl = returnUrl 
+        });
+    }
+}
+
+<div class="container-fluid">
+	<div class="row mb-3">
+        <div class="col-md-3">
+            <div class="input-group">
+                <label class="input-group-text" for="sortOptions">Sort by:</label>
+                <select class="form-select" id="sortOptions" onchange="window.location.href=this.value">
+                    <option value="@GetSortUrl(TaskSortOption.Default)" selected="@(ViewBag.SortBy == TaskSortOption.Default)">Created date</option>
+                    <option value="@GetSortUrl(TaskSortOption.ByTitle, false)" selected="@(ViewBag.SortBy == TaskSortOption.ByTitle && !ViewBag.Descending)">Title (A-Z)</option>
+                    <option value="@GetSortUrl(TaskSortOption.ByTitle, true)" selected="@(ViewBag.SortBy == TaskSortOption.ByTitle && ViewBag.Descending)">Title (Z-A)</option>
+                    <option value="@GetSortUrl(TaskSortOption.ByDueDate, false)" selected="@(ViewBag.SortBy == TaskSortOption.ByDueDate && !ViewBag.Descending)">Due Date (Earliest First)</option>
+                    <option value="@GetSortUrl(TaskSortOption.ByDueDate, true)" selected="@(ViewBag.SortBy == TaskSortOption.ByDueDate && ViewBag.Descending)">Due Date (Latest First)</option>
+                </select>
+            </div>
+        </div>
+		 <div class="col-md-3">
+            <div class="input-group">
+                <label class="input-group-text" for="statusFilter">Status:</label>
+                <select class="form-select" id="statusFilter" onchange="window.location.href=this.value">
+                    <option value="@GetStatusFilterUrl(null)" selected="@(ViewBag.StatusFilter == null)">All</option>
+                    <option value="@GetStatusFilterUrl(TodoListApp.WebApp.Models.TaskStatus.NotStarted)" selected="@(ViewBag.StatusFilter == TodoListApp.WebApp.Models.TaskStatus.NotStarted)">Not Started</option>
+                    <option value="@GetStatusFilterUrl(TodoListApp.WebApp.Models.TaskStatus.InProgress)" selected="@(ViewBag.StatusFilter == TodoListApp.WebApp.Models.TaskStatus.InProgress)">In Progress</option>
+                    <option value="@GetStatusFilterUrl(TodoListApp.WebApp.Models.TaskStatus.Completed)" selected="@(ViewBag.StatusFilter == TodoListApp.WebApp.Models.TaskStatus.Completed)">Completed</option>
+                </select>
+            </div>
+        </div>
+		<div class="col-md-3">
+            <div class="input-group">
+                <label class="input-group-text" for="tagFilter">Tag:</label>
+                <select class="form-select" id="tagFilter" onchange="window.location.href=this.value">
+                    <option value="@GetTagFilterUrl(null)" selected="@(string.IsNullOrEmpty(ViewBag.TagFilter))">All</option>
+                    @foreach(var tag in ViewBag.PredefinedTags)
+                    {
+                        <option value="@GetTagFilterUrl(tag)" selected="@(ViewBag.TagFilter == tag)">@tag</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            No tasks assigned to this user.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Todo List</th>
+                        <th>Status</th>
+                        <th>Due Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var task in Model)
+                    {
+                        <tr class="@(task.IsOverdue ? "table-danger" : "")">
+                            <td>@task.Title</td>
+                            <td>
+								@if (ViewBag.TodoListNames != null && ViewBag.TodoListNames.ContainsKey(task.TodoListId))
+								{
+									<a asp-controller="TodoList" asp-action="Details" asp-route-id="@task.TodoListId">
+										@ViewBag.TodoListNames[task.TodoListId]
+									</a>
+								}
+								else
+								{
+									<a asp-controller="TodoList" asp-action="Details" asp-route-id="@task.TodoListId">
+										List #@task.TodoListId
+									 </a>
+								}
+							</td>
+                            <td>
+								<form asp-controller="Task" asp-action="Update" method="post">
+									@Html.AntiForgeryToken()
+        
+									<!-- Hidden fields to store all task data -->
+									<input type="hidden" name="Id" value="@task.Id" />
+									<input type="hidden" name="Title" value="@task.Title" />
+									<input type="hidden" name="Description" value="@task.Description" />
+									<input type="hidden" name="TodoListId" value="@task.TodoListId" />
+									<input type="hidden" name="DueDate" value="@(task.DueDate.HasValue ? task.DueDate.Value.ToString("o") : "")" />
+									<input type="hidden" name="CreatedAt" value="@task.CreatedAt.ToString("o")" />
+									<input type="hidden" name="AssignedUserId" value="@task.AssignedUserId" />
+        
+									<!-- Add a hidden field for return URL if needed -->
+									<input type="hidden" name="returnUrl" value="@Url.Action("AssignedTasks", new { userId = ViewBag.UserId, page = ViewBag.CurrentPage, pageSize = ViewBag.PageSize, sortBy = ViewBag.SortBy, descending = ViewBag.Descending, statusFilter = ViewBag.StatusFilter })" />
+        
+									@{
+										var notStarted = task.Status == TModels.TaskStatus.NotStarted;
+										var inProgress = task.Status == TModels.TaskStatus.InProgress;
+										var completed = task.Status == TModels.TaskStatus.Completed;
+									}
+        
+									<select class="form-select form-select-sm status-dropdown py-2" style="width: 130px;" name="Status" id="Status-@task.Id" onchange="this.form.submit()">
+										<option value="@((int)TModels.TaskStatus.NotStarted)" selected="@(task.Status == TModels.TaskStatus.NotStarted)">Not Started</option>
+										<option value="@((int)TModels.TaskStatus.InProgress)" selected="@(task.Status == TModels.TaskStatus.InProgress)">In Progress</option>
+										<option value="@((int)TModels.TaskStatus.Completed)" selected="@(task.Status == TModels.TaskStatus.Completed)">Completed</option>
+									</select>
+								</form>
+							</td>
+                            <td>
+                                @(task.DueDate.HasValue ? task.DueDate.Value.ToString("yyyy-MM-dd") : "N/A")
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#taskDetailsModal-@task.Id">
+                                        Details
+                                    </button>
+                                    <!-- <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editTaskModal-@task.Id">
+                                        Edit
+                                    </button> -->
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        @if (ViewBag.TotalCount > ViewBag.PageSize)
+        {
+            var totalPages = Math.Ceiling((double)ViewBag.TotalCount / ViewBag.PageSize);
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                            <a class="page-link" asp-action="AssignedTasks" 
+                               asp-route-userId="@ViewBag.UserId" 
+                               asp-route-page="@i" 
+                               asp-route-pageSize="@ViewBag.PageSize"
+                               asp-route-sortBy="@ViewBag.SortBy"
+                               asp-route-descending="@ViewBag.Descending"
+                               asp-route-statusFilter="@ViewBag.StatusFilter">@i</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+        
+        <!-- Task Details and Edit Modals -->
+        @foreach (var task in Model)
+        {
+            <partial name="_TaskDetailsPartial" model="task" />
+            <partial name="_EditTaskPartial" model="task" />
+        }
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function submitPostRequest(url) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = url;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    </script>
+}

@@ -20,8 +20,8 @@ public class TaskEntity
     public TodoListApp.WebApi.Models.TaskStatus Status { get; set; } = TodoListApp.WebApi.Models.TaskStatus.NotStarted;
     public DateTime? DueDate { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public int AssignedUserId { get; set; }
-    public string TagsJson { get; set; }
-    public string CommentsJson { get; set; }
+    public Guid AssignedUserId { get; set; }
+    public string? TagsJson { get; set; }
+    public string? CommentsJson { get; set; }
 
 }

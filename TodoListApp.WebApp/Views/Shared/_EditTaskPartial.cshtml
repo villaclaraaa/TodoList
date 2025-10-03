@@ -1,0 +1,168 @@
+@model TodoListApp.WebApp.Models.TodoTaskModel
+
+<div class="modal fade" id="editTaskModal-@Model.Id" tabindex="-1" aria-labelledby="editTaskModalLabel-@Model.Id" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTaskModalLabel-@Model.Id">Edit Task: @Model.Title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Task" asp-action="Update" method="post">
+                <input type="hidden" name="Id" value="@Model.Id" />
+                <input type="hidden" name="TodoListId" value="@Model.TodoListId" />
+                <input type="hidden" name="CreatedAt" value="@Model.CreatedAt" />
+                <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                <input type="hidden" id="AssignedUserId-@Model.Id" name="AssignedUserId" value="@Model.AssignedUserId" />
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="Title-@Model.Id" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="Title-@Model.Id" name="Title" value="@Model.Title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="Description-@Model.Id" class="form-label">Description</label>
+                        <textarea class="form-control" id="Description-@Model.Id" name="Description" rows="3">@Model.Description</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="Status-@Model.Id" class="form-label">Status</label>
+                        <select class="form-select" id="Status-@Model.Id" name="Status">
+                            <option value="0" >Not Started</option>
+                            <option value="1" >In Progress</option>
+                            <option value="2" >Completed</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="DueDate-@Model.Id" class="form-label">Due Date</label>
+                        <input type="datetime-local" class="form-control" id="DueDate-@Model.Id" name="DueDate" 
+                            value="@(Model.DueDate.HasValue ? Model.DueDate.Value.ToString("yyyy-MM-ddTHH:mm") : "")" />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="UserEmail-@Model.Id" class="form-label">Assigned User Email</label>
+                        <div class="position-relative">
+                            <input type="text" class="form-control" id="UserEmail-@Model.Id" placeholder="Search by email..." 
+                                   autocomplete="off" data-task-id="@Model.Id" />
+                            <div id="userDropdown-@Model.Id" class="dropdown-menu w-100 user-dropdown" style="display: none;">
+                                <!-- Results will appear here -->
+                            </div>
+                        </div>
+                        <small class="form-text text-muted" id="assignedUserName-@Model.Id">
+                            @if (ViewBag.UserNames != null && ViewBag.UserNames.ContainsKey(Model.AssignedUserId))
+                            {
+                                @ViewBag.UserNames[Model.AssignedUserId]
+                            }
+                            else if (Model.AssignedUserId != Guid.Empty)
+                            {
+                                <text>User ID: @Model.AssignedUserId</text>
+                            }
+                            else
+                            {
+                                <text>No user assigned</text>
+                            }
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const taskId = '@Model.Id';
+        const userEmailInput = document.getElementById(`UserEmail-${taskId}`);
+        const userDropdown = document.getElementById(`userDropdown-${taskId}`);
+        const assignedUserIdInput = document.getElementById(`AssignedUserId-${taskId}`);
+        const assignedUserNameDisplay = document.getElementById(`assignedUserName-${taskId}`);
+
+        // Add console.log for debugging
+        console.log("Task ID:", taskId);
+        console.log("AssignedUserId Input:", assignedUserIdInput);
+        console.log("Current AssignedUserId:", '@Model.AssignedUserId');
+
+        // Set the selected option in the Status dropdown
+        const statusDropdown = document.getElementById(`Status-${taskId}`);
+        if (statusDropdown) {
+            statusDropdown.value = '@((int)Model.Status)';
+        } 
+
+        // Initialize the email input with the current user's email if available
+        // This would require additional code to get the email by user ID
+
+        let debounceTimer;
+        
+        userEmailInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function() {
+                const query = userEmailInput.value.trim();
+                
+                if (query.length < 2) {
+                    userDropdown.style.display = 'none';
+                    return;
+                }
+                
+                fetch(`/User/SearchByEmail?query=${encodeURIComponent(query)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log("Search results:", data); // Add debugging
+                        userDropdown.innerHTML = '';
+                        
+                        if (data && data.length > 0) {
+                            data.forEach(user => {
+                                const item = document.createElement('a');
+                                item.classList.add('dropdown-item');
+                                item.href = '#';
+                                item.innerText = `${user.email} (${user.fullName})`;
+                                item.addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    console.log("Selected user:", user); // Add debugging
+                                    assignedUserIdInput.value = user.id;
+                                    userEmailInput.value = user.email;
+                                    assignedUserNameDisplay.innerText = user.fullName;
+                                    userDropdown.style.display = 'none';
+                                });
+                                userDropdown.appendChild(item);
+                            });
+                            
+                            userDropdown.style.display = 'block';
+                        } else {
+                            const noResults = document.createElement('span');
+                            noResults.classList.add('dropdown-item-text');
+                            noResults.innerText = 'No users found';
+                            userDropdown.appendChild(noResults);
+                            userDropdown.style.display = 'block';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error searching for users:', error);
+                    });
+            }, 300); // Debounce for 300ms
+        });
+        
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target !== userEmailInput && !userDropdown.contains(e.target)) {
+                userDropdown.style.display = 'none';
+            }
+        });
+        
+        // Show dropdown when input is focused if it has content
+        userEmailInput.addEventListener('focus', function() {
+            if (userEmailInput.value.trim().length >= 2) {
+                userEmailInput.dispatchEvent(new Event('input'));
+            }
+        });
+    });
+</script>

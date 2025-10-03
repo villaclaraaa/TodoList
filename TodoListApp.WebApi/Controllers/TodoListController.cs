@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoListApp.WebApi.Models;
 using TodoListApp.WebApi.Services;
 
 namespace TodoListApp.WebApi.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class TodoListController : Controller
@@ -21,7 +23,7 @@ namespace TodoListApp.WebApi.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<IEnumerable<TodoListModel>>> GetTodoLists([FromQuery] int ownerId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<ActionResult<IEnumerable<TodoListModel>>> GetTodoLists([FromQuery] Guid ownerId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             try
             {

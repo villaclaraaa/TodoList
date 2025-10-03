@@ -1,30 +1,129 @@
-@model TodoListApp.WebApp.Models.TodoListWebApiModel
+@model TodoListApp.WebApp.Models.TodoListModel
+@using System.Security.Claims
 
 @{
     ViewData["Title"] = "Todo List Details";
+	bool isCurrentUserOwner = User.FindFirstValue(ClaimTypes.NameIdentifier) == Model.OwnerId.ToString();
 }
 
-<h1>Todo List Details</h1>
+<h1>@Model.Title</h1>
 
 <div>
     <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Description)
         </dd>
     </dl>
 </div>
 
+<h3>Tasks</h3>
+<div class="row mb-3">
+	<div class="col-md-12">
+		@if (isCurrentUserOwner)
+		{
+			<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTaskModal-@Model.Id">
+				Add Task
+			</button>
+		}
+	</div>
+</div>
+
+@if(Model.Tasks.Any())
+{
+	<table class="table table-stripped">
+		<thead>
+			<tr>
+				<th>Title</th>
+				<th>Description</th>
+				<th>Status</th>
+				<th>Assignee</th>
+				<th>Creation Date</th>
+				<th>Due Date</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach(var task in Model.Tasks)
+			{
+				<tr class="@(task.IsOverdue ? "table-danger" : "")">
+					<td>@task.Title</td>
+					<td>@task.Description</td>
+					<td>
+						<span class="badge @(task.Status == TodoListApp.WebApp.Models.TaskStatus.Completed ? "bg-success"
+						: task.Status == TodoListApp.WebApp.Models.TaskStatus.InProgress ? "bg-primary" : "bg-secondary")">
+                            @task.Status
+                        </span>
+					</td>
+					<td>
+						@if (ViewBag.UserNames != null && ViewBag.UserNames.ContainsKey(task.AssignedUserId))
+                        {
+                            @ViewBag.UserNames[task.AssignedUserId]
+                        }
+                        else
+                        {
+                            <span class="text-muted">Unassigned</span>
+                        }
+					</td>
+					 <td>
+                        @task.CreatedAt
+                    </td>
+					 <td>
+                        @(task.DueDate.HasValue ? task.DueDate.Value.ToString("yyyy-MM-dd") : "N/A")
+                    </td>
+					@if (isCurrentUserOwner)
+					{
+						<td>
+							<div class="btn-group">
+								<button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editTaskModal-@task.Id">
+									Edit
+								</button>
+								<button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#taskDetailsModal-@task.Id">
+									Details
+								</button>
+								<form asp-controller="Task" asp-action="DeleteConfirmed" asp-route-taskId="@task.Id" method="post" style="display:inline;">
+									@Html.AntiForgeryToken()
+									<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this task?');">Delete</button>
+								</form>
+							</div>
+						</td>
+					}
+					else
+					{
+						<!-- Non-owner can still see details -->
+						<td>
+							<div class="btn-group">
+								<button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#taskDetailsModal-@task.Id">
+									Details
+								</button>
+							</div>
+						</td>
+					}
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+else
+{
+    <div class="alert alert-info">
+        No tasks found for this todo list. Create your first task using the button above.
+    </div>
+}
+@if (isCurrentUserOwner)
+{
+	<partial name="_AddTaskModalPartial" model="Model"/>
+}
+
+@foreach(var task in Model.Tasks)
+{
+    <partial name="_TaskDetailsPartial" model="task" />
+	<partial name="_EditTaskPartial" model="task" />
+}
+
 <div>
-    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
-    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+    @if (isCurrentUserOwner)
+	{
+		<a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+	}
+    <a asp-action="Index" asp-route-ownerId="@User.FindFirstValue(ClaimTypes.NameIdentifier)" class="btn btn-secondary">Back to List</a>
 </div>
