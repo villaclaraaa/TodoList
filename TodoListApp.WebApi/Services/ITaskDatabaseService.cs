@@ -31,5 +31,9 @@ namespace TodoListApp.WebApi.Services
         Task<IEnumerable<Models.Task>> GetFilteredTasksAsync(TaskFilterModel filter);
         Task<Models.Task> ChangeTaskStatusAsync(int taskId, TodoListApp.WebApi.Models.TaskStatus newStatus);
 
+        Task<IEnumerable<Models.Task>> GetTasksAssignedToUser(int userId, int page = 1, int pageSize = 10,
+            TaskSortOption sortOption = TaskSortOption.Default, bool descending = false,
+            Models.TaskStatus? statusFilter = null);
+        Task<int> GetAssignedTasksCount(int userId, Models.TaskStatus? statusFilter = null);
     }
 }

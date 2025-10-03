@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using TodoListApp.WebApp.Helpers;
 using TodoListApp.WebApp.Models;
 using TodoListApp.WebApp.Services;
 namespace TodoListApp.WebApp.Controllers;
@@ -22,11 +23,13 @@ public class TodoListController : Controller
             var todoLitst = await this._todoListService.GetAllTodoListsAsync(1, page, pageSize);
             var totalCount = await this._todoListService.GetTodoListsCountAsync(1);
 
+            var viewModels = todoLitst.Select(Mapper.MapDomainToViewModel).ToList();
+
             this.ViewBag.TotalCount = totalCount;
             this.ViewBag.PageSize = pageSize;
             this.ViewBag.CurrentPage = page;
 
-            return this.View(todoLitst);
+            return this.View(viewModels);
         }
         catch (Exception ex)
         {
@@ -39,12 +42,12 @@ public class TodoListController : Controller
     [HttpGet]
     public IActionResult Create()
     {
-        return this.View(new TodoListWebApiModel { OwnerId = this.DefaultOwnerId });
+        return this.View(new TodoListModel { OwnerId = this.DefaultOwnerId });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(TodoListWebApiModel todoList)
+    public async Task<IActionResult> Create(TodoListModel todoListModel)
     {
         if (!this.ModelState.IsValid)
         {
@@ -55,20 +58,21 @@ public class TodoListController : Controller
                     this._logger.LogWarning($"Validation error: {error.ErrorMessage}");
                 }
             }
-            return this.View(todoList);
+            return this.View(todoListModel);
         }
 
         try
         {
-            todoList.OwnerId = this.DefaultOwnerId;
-            var createdTodoList = await this._todoListService.AddTodoListAsync(todoList);
+            todoListModel.OwnerId = this.DefaultOwnerId;
+            var domainModel = Mapper.MapViewModelToDomain(todoListModel);
+            var createdTodoList = await this._todoListService.AddTodoListAsync(domainModel);
             return this.RedirectToAction(nameof(Index));
         }
         catch (Exception ex)
         {
             this._logger.LogError(ex, "Error creating todo list");
             this.ModelState.AddModelError("", "An error occurred while creating the todo list. Please try again.");
-            return this.View(todoList);
+            return this.View(todoListModel);
             throw;
         }
     }
@@ -84,7 +88,9 @@ public class TodoListController : Controller
                 return this.NotFound();
             }
 
-            return this.View(todoList);
+            var viewModel = Mapper.MapDomainToViewModel(todoList);
+
+            return this.View(viewModel);
         }
         catch (Exception ex)
         {
@@ -129,7 +135,9 @@ public class TodoListController : Controller
                 return this.NotFound();
             }
 
-            return this.View(todoList);
+            var viewModel = Mapper.MapDomainToViewModel(todoList);
+
+            return this.View(viewModel);
         }
         catch (Exception ex)
         {
@@ -142,28 +150,29 @@ public class TodoListController : Controller
     // US04: Process form submission to update a todo list
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, TodoListWebApiModel todoList)
+    public async Task<IActionResult> Edit(int id, TodoListModel todoListModel)
     {
-        if (id != todoList.Id)
+        if (id != todoListModel.Id)
         {
             return this.BadRequest();
         }
 
         if (!this.ModelState.IsValid)
         {
-            return this.View(todoList);
+            return this.View(todoListModel);
         }
 
         try
         {
-            var updatedTodoList = await this._todoListService.UpdateTodoListAsync(id, todoList);
+            var domainModel = Mapper.MapViewModelToDomain(todoListModel);
+            var updatedTodoList = await this._todoListService.UpdateTodoListAsync(id, domainModel);
             return this.RedirectToAction(nameof(Index));
         }
         catch (Exception ex)
         {
             this._logger.LogError(ex, $"Error updating todo list with ID {id}");
             this.ModelState.AddModelError("", "An error occurred while updating the todo list. Please try again.");
-            return this.View(todoList);
+            return this.View(todoListModel);
             throw;
         }
     }
@@ -180,7 +189,9 @@ public class TodoListController : Controller
                 return this.NotFound();
             }
 
-            return this.View(todoList);
+            var viewModel = Mapper.MapDomainToViewModel(todoList);
+
+            return this.View(viewModel);
         }
         catch (Exception ex)
         {

@@ -14,5 +14,5 @@ public class TodoListWebApiModel
 
     [Required]
     public int OwnerId { get; set; }
-    public List<TodoTask> Tasks { get; set; } = new List<TodoTask>();
+    public List<TodoTaskWebApiModel> Tasks { get; set; } = new List<TodoTaskWebApiModel>();
 }

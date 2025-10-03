@@ -1,60 +1,140 @@
-@model IEnumerable<TodoListApp.WebApp.Models.TodoListWebApiModel>
+@model IEnumerable<TodoListApp.WebApp.Models.TodoListModel>
 
 @{
     ViewData["Title"] = "Todo Lists";
 }
 
-<h1>Todo Lists</h1>
+<div class="container-fluid">
+    <h1 class="my-4">Todo Lists</h1>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Create New</a>
-</p>
-
-@if (!Model.Any())
-{
-    <div class="alert alert-info">
-        No todo lists found. Click "Create New" to add your first todo list.
+    <div class="mb-3">
+        <a asp-action="Create" class="btn btn-primary">Create New</a>
     </div>
-}
-else
-{
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>@Html.DisplayNameFor(model => model.Title)</th>
-                <th>@Html.DisplayNameFor(model => model.Description)</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@Html.DisplayFor(modelItem => item.Title)</td>
-                    <td>@Html.DisplayFor(modelItem => item.Description)</td>
-                    <td>
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Details</a>
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary btn-sm">Edit</a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Delete</a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-    
-    var totalPages = Math.Ceiling((double)ViewBag.TotalCount / ViewBag.PageSize);
-    
-    if (totalPages > 1)
+
+    @if (!Model.Any())
     {
-        <nav>
-            <ul class="pagination">
-                @for (int i = 1; i <= totalPages; i++)
-                {
-                    <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
-                        <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-pageSize="@ViewBag.PageSize">@i</a>
-                    </li>
-                }
-            </ul>
-        </nav>
+        <div class="alert alert-info">
+            No todo lists found. Click "Create New" to add your first todo list.
+        </div>
     }
-}
+    else
+    {
+        <div class="row">
+            @foreach (var todoList in Model)
+            {
+                <div class="col-md-4 col-lg-3 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">@todoList.Title</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">
+                                <strong>Description:</strong> 
+                                @if (string.IsNullOrWhiteSpace(todoList.Description))
+                                {
+                                    <span class="text-muted">No description</span>
+                                }
+                                else
+                                {
+                                    @todoList.Description
+                                }
+                            </p>
+                            
+                            @if (todoList.Tasks != null && todoList.Tasks.Any())
+                            {
+                                <div class="tasks-container mt-3">
+                                    <h6>Tasks:</h6>
+                                    <ul class="list-group">
+                                        @foreach (var task in todoList.Tasks.OrderBy(t => t.DueDate).Take(3)) // Show only first 3 tasks
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <span class="@(task.Status == TodoListApp.WebApp.Models.TaskStatus.Completed ? "text-decoration-line-through" : "")">
+                                                        @task.Title
+                                                    </span>
+                                                    
+                                                    @if (task.Status == TodoListApp.WebApp.Models.TaskStatus.NotStarted)
+                                                    {
+                                                        <span class="badge bg-secondary ms-2">Not Started</span>
+                                                    }
+                                                    else if (task.Status == TodoListApp.WebApp.Models.TaskStatus.InProgress)
+                                                    {
+                                                        <span class="badge bg-info ms-2">In Progress</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-success ms-2">Completed</span>
+                                                    }
+                                                </div>
+                                            </li>
+                                        }
+                                        
+                                        @if (todoList.Tasks.Count() > 3)
+                                        {
+                                            <li class="list-group-item text-center text-muted">
+                                                +@(todoList.Tasks.Count() - 3) more tasks
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted">No tasks in this list</p>
+                            }
+                        </div>
+                        <div class="card-footer d-flex justify-content-between">
+                            <a asp-action="Details" asp-route-id="@todoList.Id" class="btn btn-info btn-sm">Details</a>
+                            <a asp-action="Edit" asp-route-id="@todoList.Id" class="btn btn-primary btn-sm">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@todoList.Id" class="btn btn-danger btn-sm">Delete</a>
+                            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addTaskModal-@todoList.Id">
+                                Add Task
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Add Task Modal for each todo list -->
+                <partial name="_AddTaskModalPartial" model="todoList" />
+            }
+        </div>
+        
+        
+            var totalPages = Math.Ceiling((double)ViewBag.TotalCount / ViewBag.PageSize);
+            
+            if (totalPages > 1)
+            {
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                                <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-pageSize="@ViewBag.PageSize">@i</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        
+    }
+</div>
+
+<style>
+    /* Optional custom styling */
+    .card {
+        transition: transform 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .card-header {
+        background-color: #007bff;
+    }
+    
+    .tasks-container {
+        max-height: 250px;
+        overflow-y: auto;
+    }
+</style>
