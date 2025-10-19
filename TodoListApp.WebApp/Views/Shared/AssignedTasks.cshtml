@@ -1,16 +1,18 @@
 @model IEnumerable<TodoListApp.WebApp.Models.TodoTaskModel>
 
 @{
-    ViewData["Title"] = $"Tasks Assigned to User {ViewBag.UserId}";
+	ViewData["Title"] = $"Tasks Assigned to User {ViewBag.UserId}";
 
 	string GetSortUrl(TaskSortOption sortOption, bool? descending = null)
-    {
-        bool isDescending = descending ?? (sortOption == ViewBag.SortBy ? !ViewBag.Descending : false);
-        return Url.Action("AssignedTasks", new { 
-            userId = ViewBag.UserId, 
-            page = ViewBag.CurrentPage, 
-            pageSize = ViewBag.PageSize, 
-            sortBy = sortOption,
+	{
+		bool isDescending = descending ?? (sortOption == ViewBag.SortBy ? !ViewBag.Descending : false);
+		var status = statusFilter ?? ViewBag.StatusFilter;
+
+		return Url.Action("AssignedTasks", new { 
+			userId = ViewBag.UserId, 
+			page = ViewBag.CurrentPage, 
+			pageSize = ViewBag.PageSize, 
+			sortBy = sortOption,
             descending = isDescending
         });
     }
@@ -28,6 +30,17 @@
                     <option value="@GetSortUrl(TaskSortOption.ByTitle, true)" selected="@(ViewBag.SortBy == TaskSortOption.ByTitle && ViewBag.Descending)">Title (Z-A)</option>
                     <option value="@GetSortUrl(TaskSortOption.ByDueDate, false)" selected="@(ViewBag.SortBy == TaskSortOption.ByDueDate && !ViewBag.Descending)">Due Date (Earliest First)</option>
                     <option value="@GetSortUrl(TaskSortOption.ByDueDate, true)" selected="@(ViewBag.SortBy == TaskSortOption.ByDueDate && ViewBag.Descending)">Due Date (Latest First)</option>
+                </select>
+            </div>
+        </div>
+		 <div class="col-md-3">
+            <div class="input-group">
+                <label class="input-group-text" for="statusFilter">Status:</label>
+                <select class="form-select" id="statusFilter" onchange="window.location.href=this.value">
+                    <option value="@GetStatusFilterUrl(null)" selected="@(ViewBag.StatusFilter == null)">All</option>
+                    <option value="@GetStatusFilterUrl(TodoListApp.WebApp.Models.TaskStatus.NotStarted)" selected="@(ViewBag.StatusFilter == TodoListApp.WebApp.Models.TaskStatus.NotStarted)">Not Started</option>
+                    <option value="@GetStatusFilterUrl(TodoListApp.WebApp.Models.TaskStatus.InProgress)" selected="@(ViewBag.StatusFilter == TodoListApp.WebApp.Models.TaskStatus.InProgress)">In Progress</option>
+                    <option value="@GetStatusFilterUrl(TodoListApp.WebApp.Models.TaskStatus.Completed)" selected="@(ViewBag.StatusFilter == TodoListApp.WebApp.Models.TaskStatus.Completed)">Completed</option>
                 </select>
             </div>
         </div>
@@ -57,10 +70,19 @@
                         <tr class="@(task.IsOverdue ? "table-danger" : "")">
                             <td>@task.Title</td>
                             <td>
-                                <a asp-controller="TodoList" asp-action="Details" asp-route-id="@task.TodoListId">
+								@if (ViewBag.TodoListNames != null && ViewBag.TodoListNames.ContainsKey(task.TodoListId))
+								{
+									<a asp-controller="TodoList" asp-action="Details" asp-route-id="@task.TodoListId">
                                     View List
-                                </a>
-                            </td>
+									</a>
+								}
+								else
+								{
+									<a asp-controller="TodoList" asp-action="Details" asp-route-id="@task.TodoListId">
+										List #@task.TodoListId
+									 </a>
+								}
+							</td>
                             <td>
                                 <span class="badge @(task.Status == TodoListApp.WebApp.Models.TaskStatus.Completed ? "bg-success" : 
                                        task.Status == TodoListApp.WebApp.Models.TaskStatus.InProgress ? "bg-primary" : "bg-secondary")">

@@ -117,8 +117,8 @@
                                 @if (Model.Tags != null && Model.Tags.Any())
                                 {
                                     <div>
-                                    @foreach (var tag in Model.Tags)
-                                    {
+                                        @foreach (var tag in Model.Tags)
+                                        {
                                             <div class="d-inline-block me-2 mb-2">
                                                 <span class="badge bg-secondary">@tag</span>
                                                 <form asp-controller="Task" asp-action="RemoveTag" method="post" class="d-inline">
@@ -128,7 +128,7 @@
                                                     <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">×</button>
                                                 </form>
                                             </div>
-                                    }
+                                        }
                                     </div>
                                 }
                                 else
