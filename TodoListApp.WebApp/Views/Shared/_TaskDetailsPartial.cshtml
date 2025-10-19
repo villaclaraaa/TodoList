@@ -117,8 +117,8 @@
                                 @if (Model.Tags != null && Model.Tags.Any())
                                 {
                                     <div>
-                                        @foreach (var tag in Model.Tags)
-                                        {
+                                    @foreach (var tag in Model.Tags)
+                                    {
                                             <div class="d-inline-block me-2 mb-2">
                                                 <span class="badge bg-secondary">@tag</span>
                                                 <form asp-controller="Task" asp-action="RemoveTag" method="post" class="d-inline">
@@ -128,7 +128,7 @@
                                                     <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">×</button>
                                                 </form>
                                             </div>
-                                        }
+                                    }
                                     </div>
                                 }
                                 else
@@ -139,15 +139,15 @@
                         </div>
 
                         <!-- Comments -->
-                       <div class="card">
+                        <div class="card">
 							<div class="card-header bg-light d-flex justify-content-between align-items-center">
-								<h6 class="mb-0">Comments</h6>
+                                <h6 class="mb-0">Comments</h6>
 								<button class="btn btn-sm btn-outline-primary" type="button" 
 										data-bs-toggle="collapse" data-bs-target="#addCommentCollapse-@Model.Id" 
 										aria-expanded="false" aria-controls="addCommentCollapse-@Model.Id">
 									Add Comment
 								</button>
-							</div>
+                            </div>
 							<div class="collapse" id="addCommentCollapse-@Model.Id">
 								<div class="card-body border-bottom">
 									<form asp-controller="Task" asp-action="AddComment" method="post">
@@ -162,13 +162,13 @@
 									</form>
 								</div>
 							</div>
-							<div class="card-body">
-								@if (Model.Comments != null && Model.Comments.Any())
-								{
+                            <div class="card-body">
+                                @if (Model.Comments != null && Model.Comments.Any())
+                                {
 									var comments = Model.Comments.ToList(); 
-									<ul class="list-group list-group-flush">
+                                    <ul class="list-group list-group-flush">
 										@for (int i = 0; i < Model.Comments.Count; i++)
-										{
+                                        {
 											var comment = comments[i];
 											<li class="list-group-item">
 												<div class="d-flex justify-content-between">
@@ -208,15 +208,15 @@
 													</form>
 												</div>
 											</li>
-										}
-									</ul>
-								}
-								else
-								{
-									<p class="text-muted">No comments</p>
-								}
-							</div>
-						</div>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    <p class="text-muted">No comments</p>
+                                }
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

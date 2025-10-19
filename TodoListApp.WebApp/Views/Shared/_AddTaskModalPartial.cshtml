@@ -13,7 +13,7 @@
                 <div class="modal-body">
                     <input type="hidden" name="TodoListId" value="@Model.Id" />
 					<input type="hidden" name="assignedUserId" value="@User.FindFirstValue(ClaimTypes.NameIdentifier)" />
-
+                    
                     <div class="mb-3">
                         <label for="Title-@Model.Id" class="form-label">Title</label>
                         <input type="text" class="form-control" id="Title-@Model.Id" name="Title" required>

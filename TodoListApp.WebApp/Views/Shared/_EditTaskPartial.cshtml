@@ -13,7 +13,7 @@
                 <input type="hidden" name="CreatedAt" value="@Model.CreatedAt" />
                 <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
                 <input type="hidden" id="AssignedUserId-@Model.Id" name="AssignedUserId" value="@Model.AssignedUserId" />
-
+                
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="Title-@Model.Id" class="form-label">Title</label>
@@ -47,8 +47,14 @@
                                    autocomplete="off" data-task-id="@Model.Id" />
                             <div id="userDropdown-@Model.Id" class="dropdown-menu w-100 user-dropdown" style="display: none;">
                                 <!-- Results will appear here -->
-                            </div>
-                        </div>
+                    </div>
+                    
+                    <!-- Tags input -->
+                    <div class="mb-3">
+                        <label for="tagsInput-@Model.Id" class="form-label">Tags (comma separated)</label>
+                        <input id="tagsInput-@Model.Id" name="TagsInput" class="form-control" 
+                            value="@(Model.Tags != null ? string.Join(",", Model.Tags) : "")" />
+                    </div>
                         <small class="form-text text-muted" id="assignedUserName-@Model.Id">
                             @if (ViewBag.UserNames != null && ViewBag.UserNames.ContainsKey(Model.AssignedUserId))
                             {
